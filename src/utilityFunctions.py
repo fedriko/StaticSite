@@ -1,5 +1,6 @@
 from htmlnode import *
 from textnode import *
+import re
 
 text_type_text = "text"
 text_type_bold = "bold"
@@ -45,5 +46,82 @@ def split_nodes_delimiter(old_nodes,delimiter,text_type):
                     nodes_list.append(TextNode(splited_node[i],text_type))
 
     return nodes_list
+
+def extract_markdown_images(text):
+    images=re.findall(r"!\[(.*?)\]\((.*?)\)",text)
+    return images
+
+def extract_markdown_links(text):
+    links=re.findall(r"\[(.*?)\]\((.*?)\)",text)
+    return links
+
+def split_nodes_image(old_nodes):
+    new_nodes=[]
+    place_holder="[PLACEHOLDER](nolink)"
+    for node in old_nodes:
+        if(node.text_type != text_type_text):
+            new_nodes.append(node)
+            continue
+        node_text=node.text
+        list_tuples=extract_markdown_images(node_text)
+        for tuples in list_tuples:
+            node_text=node_text.replace(f"![{tuples[0]}]({tuples[1]})",place_holder)
+            
+        splited_text=node_text.split(place_holder)
+        i=0
+        j=0
+        while(i<len(list_tuples) or j<len(splited_text)):
+            if(j<len(splited_text)):
+                if(splited_text[i]==""):
+                    j+=1
+                else:
+                    new_nodes.append(TextNode(splited_text[i],text_type_text))
+                    j+=1
+                
+                
+            if(i<len(list_tuples)):
+                new_nodes.append(TextNode(list_tuples[i][0],text_type_image,list_tuples[i][1]))
+                i+=1
+            
+            
+           
+
+    
+    return new_nodes
+
+def split_nodes_link(old_nodes):
+    new_nodes=[]
+    place_holder="[PLACEHOLDER](nolink)"
+    for node in old_nodes:
+        if(node.text_type != text_type_text):
+            new_nodes.append(node)
+            continue
+         
+        node_text=node.text
+        list_tuples=extract_markdown_links(node_text)
+        for tuples in list_tuples:
+            node_text=node_text.replace(f"[{tuples[0]}]({tuples[1]})",place_holder)
+            
+        splited_text=node_text.split(place_holder)
+        i=0
+        j=0
+        while(i<len(list_tuples) or j<len(splited_text)):
+            if(j<len(splited_text)):
+                if(splited_text[i]==""):
+                    j+=1
+                else:
+                    new_nodes.append(TextNode(splited_text[i],text_type_text))
+                    j+=1
+                
+                
+            if(i<len(list_tuples)):
+                new_nodes.append(TextNode(list_tuples[i][0],text_type_link,list_tuples[i][1]))
+                i+=1
+           
+
+    
+    return new_nodes
+            
+
 
 
