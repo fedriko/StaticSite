@@ -24,6 +24,8 @@ class TestTextNode(unittest.TestCase):
         node= TextNode("Allo","b","na")
         node2= TextNode("Allo","b","ok")
         self.assertNotEqual(node,node2)
+    
+   
 
 
 if __name__ == "__main__":

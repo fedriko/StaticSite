@@ -121,7 +121,23 @@ def split_nodes_link(old_nodes):
 
     
     return new_nodes
-            
 
+def text_to_textnodes(text):
+    full_text=TextNode(text,text_type_text)
+    nodes_bold=split_nodes_delimiter([full_text],"**",text_type_bold)
+    nodes_italic=split_nodes_delimiter(nodes_bold,"*",text_type_italic)
+    nodes_code=split_nodes_delimiter(nodes_italic,"`",text_type_code)
+    nodes_images=split_nodes_image(nodes_code)
+    fnodes=split_nodes_link(nodes_images)
+    return fnodes
 
+def markdown_to_blocks(markdown):
+    blocks = markdown.split("\n\n")
+    filtered_blocks = []
+    for block in blocks:
+        if block == "":
+            continue
+        block = block.strip()
+        filtered_blocks.append(block)
+    return filtered_blocks
 

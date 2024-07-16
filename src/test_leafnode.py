@@ -15,6 +15,9 @@ class TestTextNode(unittest.TestCase):
     def test_no_value(self):
         node=LeafNode("a", None, {"href": "https://www.google.com"})
         self.assertRaises(ValueError)
+    
+   
+    
 
 
 
