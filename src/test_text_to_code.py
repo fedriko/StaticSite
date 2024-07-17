@@ -69,6 +69,60 @@ This is the same paragraph on a new line
                 "* This is a list\n* with items",
             ],
         )
+    
+    def test_block_to_block_type_eq(self):
+        markdown="""* This is the first list item in a list block
+* This is a list item
+* This is another list item"""
+        self.assertEqual("unordered_list",block_to_block_type(markdown))
+
+    def test_block_to_block_type_eq_heading(self):
+        markdown="# This is a heading"
+        self.assertEqual("heading",block_to_block_type(markdown))
+    
+    def test_block_to_block_type_eq_heading2(self):
+        markdown="halo # This is a heading"
+        self.assertEqual("paragraph",block_to_block_type(markdown))
+    
+    def test_block_to_block_type_eq_heading3(self):
+        markdown="###a This is a heading"
+        self.assertEqual("paragraph",block_to_block_type(markdown))
+
+    def test_block_to_block_type_eq_heading4(self):
+        markdown="###This is a heading"
+        self.assertEqual("paragraph",block_to_block_type(markdown))
+
+    def test_block_to_block_type_eq_heading5(self):
+        markdown="### This is a heading"
+        self.assertEqual("heading",block_to_block_type(markdown))
+
+    def test_block_to_block_type_eq_heading6(self):
+        markdown="##### This is a heading"
+        self.assertEqual("heading",block_to_block_type(markdown))
+
+    def test_block_to_block_type_eq_heading7(self):
+        markdown="####### This is a heading"
+        self.assertEqual("paragraph",block_to_block_type(markdown))
+
+    def test_block_to_block_type_eq_orderedlist(self):
+        markdown="""1. wow
+2. hey
+3. cool"""
+        self.assertEqual("ordered_list",block_to_block_type(markdown))
+    def test_block_to_block_type_eq_orderedlist2(self):
+        markdown="``` its code ```"
+        self.assertEqual("code",block_to_block_type(markdown))
+    
+    def test_block_to_block_type_eq_quote(self):
+        markdown=""">. wow
+>. hey
+>. cool"""
+        self.assertEqual("quote",block_to_block_type(markdown))
+    
+    
+    
+       
+
    
 
     
