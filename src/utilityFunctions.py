@@ -1,6 +1,8 @@
 from htmlnode import *
 from textnode import *
 import re
+import os
+import shutil
 
 text_type_text = "text"
 text_type_bold = "bold"
@@ -10,6 +12,7 @@ text_type_link = "link"
 text_type_image = "image"
 
 def text_node_to_html_node(text_node):
+
     match text_node.text_type:
         case "text":
             return LeafNode(value=text_node.text)
@@ -36,6 +39,7 @@ def split_nodes_delimiter(old_nodes,delimiter,text_type):
             nodes_list.append(node)
         else:
             if(len(splited_node)%2==0):
+            
                 raise Exception("No closing delimiter Found")
             for i in range(len(splited_node)):
                 if(splited_node[i]==""):
@@ -66,7 +70,6 @@ def split_nodes_image(old_nodes):
         list_tuples=extract_markdown_images(node_text)
         for tuples in list_tuples:
             node_text=node_text.replace(f"![{tuples[0]}]({tuples[1]})",place_holder)
-            
         splited_text=node_text.split(place_holder)
         i=0
         j=0
@@ -80,6 +83,7 @@ def split_nodes_image(old_nodes):
                 
                 
             if(i<len(list_tuples)):
+                
                 new_nodes.append(TextNode(list_tuples[i][0],text_type_image,list_tuples[i][1]))
                 i+=1
             
@@ -145,7 +149,7 @@ def block_to_block_type(markdown):
     isquote=True
     isulist=True
     isolist=True
-    unordered=["*",'-']
+    unordered=["* ","- "]
     i=1
     head=markdown.split(" ")[0]
     if len(head)<7 and head.count("#")==len(head):
@@ -156,7 +160,7 @@ def block_to_block_type(markdown):
     for line in lines:
         if line[0]!=">" and isquote:
             isquote=False
-        if not (line[0] in unordered) and isulist:
+        if not (line[0:2] in unordered) and isulist:
             isulist=False
         if (line[:3]!=f"{i}. "):
             isolist=False
@@ -202,18 +206,14 @@ def heading_to_html(block):
     splited_block=block.split("# ")
     number_hash=len(splited_block[0])+1
     childrens=text_to_children(splited_block[1])
-    if childrens==None:
-        return LeafNode(f"h{number_hash}",splited_block[1])
-    else:
-        return ParentNode(f"h{number_hash}",children=childrens)
+    
+    return ParentNode(f"h{number_hash}",children=childrens)
 
 def code_to_html(block):
     splited_block=block.split("```")
     childrens=text_to_children(splited_block[1])
-    if childrens==None:
-        return LeafNode("code",splited_block[1])
-    else:
-        return ParentNode("code",children=childrens)
+   
+    return ParentNode("code",children=childrens)
 
     
 
@@ -222,10 +222,8 @@ def unordered_list_to_html(block):
     childs=[]
     for line in lines:
         childrens=text_to_children(line[2:])
-        if childrens==None:
-            childs.append(LeafNode("li",line[2:]))
-        else:
-            childs.append(ParentNode("li",children=childrens))
+      
+        childs.append(ParentNode("li",children=childrens))
         
     return ParentNode("ul",children=childs)
 
@@ -234,38 +232,91 @@ def ordered_list_to_html(block):
     childs=[]
     for line in lines:
         childrens=text_to_children(line[3:])
-        if childrens==None:
-            childs.append(LeafNode("li",line[3:]))
-        else:
-            childs.append(ParentNode("li",children=childrens))
+        
+        childs.append(ParentNode("li",children=childrens))
 
     return ParentNode("ol",children=childs)
 
 def paragraph_to_html(block):
     new_input=block.replace("\n"," ")
     childrens=text_to_children(new_input)
-    if childrens==None:
-        return LeafNode("p",new_input)
-    else:
-        return ParentNode("p",children=childrens)
+
+    return ParentNode("p",children=childrens)
 
     
 def quote_to_html(block):
     filtered_text=block.replace("> ","")
     double_filter=filtered_text.replace("\n"," ")
     childrens=text_to_children(double_filter)
-    if childrens==None:
-        return LeafNode("blockquote",double_filter)
-    else:
-        return ParentNode("blockquote",children=childrens)
-    return HTMLNode()
+  
+    return ParentNode("blockquote",children=childrens)
+    
 
 def text_to_children(text):
     list_nodes=text_to_textnodes(text)
-    if len(list_nodes)<2:
-        return None
+   
+    return list(map(text_node_to_html_node,list_nodes))
+
+def update_content(source,destination):
+    if(not(os.path.exists(source) and os.path.exists(destination))):
+        raise Exception("Source or destination does not exist")
+    shutil.rmtree(destination)
+    os.mkdir(destination)
+    for file in os.listdir(source):
+        if os.path.isfile(os.path.join(source,file)):
+            shutil.copy(os.path.join(source,file),destination)
+        else:
+            os.mkdir(os.path.join(destination,file))
+            update_content(os.path.join(source,file),os.path.join(destination,file))
+def extract_title(markdown):
+    lines=markdown.split("\n")
+    i=0
+    got_title=False
+    title=""
+    while(i<len(lines) and got_title==False):
+        filtered_line=lines[i].strip()
+        if(filtered_line==""):
+            i+=1
+            continue
+        if(filtered_line[0:2]=="# "):
+            got_title=True
+            
+            title=filtered_line[1:].strip()
+        else:
+            i+=1
+    if(i>len(lines)):
+        raise Exception("Title is missing")
     else:
-        return list(map(text_node_to_html_node,list_nodes))
+        return title
+
+def generate_page(from_path,template_path,dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    text = open(from_path,'r')
+    template=open(template_path)
+    markdown=text.read()
+    temp=template.read()
+    html_string=markdown_to_html_node(markdown).to_html()
+    temp=temp.replace("{{ Title }}",extract_title(markdown))
+    temp=temp.replace("{{ Content }}",html_string)
+    if(not os.path.exists(os.path.dirname(dest_path))):
+        os.makedirs(os.path.dirname(dest_path))
+    html_file=open(dest_path,'w')
+    html_file.write(temp)
+    text.close
+    template.close
+    html_file.close
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    list_dir=os.listdir(dir_path_content)
+    for item in list_dir:
+        
+        if(os.path.isfile(os.path.join(dir_path_content,item))):
+            if(item.split(".")[-1]=="md"):
+                new=item.split(".")[0]+".html"
+                generate_page(os.path.join(dir_path_content,item),template_path,os.path.join(dest_dir_path,new))
+        else:
+            generate_pages_recursive(os.path.join(dir_path_content,item),template_path,os.path.join(dest_dir_path,item))
+
+
 
 
     
